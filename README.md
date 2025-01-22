@@ -1,5 +1,4 @@
-
-# Human Detection with Webcam
+# Webcam Surveillance
 
 This project detects humans in a live webcam feed using a MobileNet-SSD model. It saves screenshots when a person is detected and logs the duration of their presence. The script can be run as a command-line tool on Linux or as a Python script on other platforms.
 
@@ -10,7 +9,6 @@ This project detects humans in a live webcam feed using a MobileNet-SSD model. I
 - **Real-time human detection** using a pre-trained MobileNet-SSD model.
 - **Saves screenshots** when a person is detected.
 - **Logs detection durations** in a CSV file.
-- **Command-line interface** for easy use on Linux.
 - **Customizable configuration** via `config.json`.
 
 ---
