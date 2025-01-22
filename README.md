@@ -101,15 +101,6 @@ Modify `config.json` to customize the behavior:
 
 ---
 
-## Requirements
-
-- Python 3.x
-- OpenCV (`opencv-python`)
-- NumPy (`numpy`)
-- Tabulate (`tabulate`) for pretty-printing statistics.
-
----
-
 ## Example Output
 
 ### Screenshots
