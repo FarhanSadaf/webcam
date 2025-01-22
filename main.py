@@ -38,6 +38,7 @@ def main(config, show_feed):
     output_folder = config["output_folder"]
     confidence_threshold = config["confidence_threshold"]
     person_class_id = config["person_class_id"]
+    camera_id = config["camera_id"]
 
     # Load MobileNet-SSD model (Caffe format)
     net = cv2.dnn.readNetFromCaffe(model_config, model_weights)
@@ -47,7 +48,7 @@ def main(config, show_feed):
         classes = f.read().strip().split("\n")
 
     # Initialize video capture
-    video_capture = cv2.VideoCapture(0)
+    video_capture = cv2.VideoCapture(camera_id)
 
     if not video_capture.isOpened():
         print("Error: Could not open video feed.")
