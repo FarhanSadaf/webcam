@@ -1,2 +1,2 @@
-pip install opencv-python
-pip install tabulate
+opencv-python
+tabulate
