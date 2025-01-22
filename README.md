@@ -47,17 +47,17 @@ chmod +x webcam
 
 - **Without showing the video feed:**
   ```bash
-  webcam
+  ./webcam
   ```
 
 - **With the video feed:**
   ```bash
-  webcam --show
+  ./webcam --show
   ```
 
 - **Print detection statistics:**
   ```bash
-  webcam --stat
+  ./webcam --stat
   ```
 
 #### Add to PATH (Optional):
