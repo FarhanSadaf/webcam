@@ -6,12 +6,27 @@ import time
 import csv
 import argparse
 import json
+from tabulate import tabulate  # For pretty-printing the CSV file
 
 def load_config(config_file):
     """Load configuration from a JSON file."""
     with open(config_file, "r") as f:
         config = json.load(f)
     return config
+
+def print_statistics(csv_file):
+    """Print the CSV file in an organized table."""
+    if not os.path.exists(csv_file):
+        print("No statistics available. CSV file does not exist.")
+        return
+
+    with open(csv_file, mode="r") as file:
+        reader = csv.reader(file)
+        headers = next(reader)  # Read the header row
+        data = list(reader)     # Read the rest of the data
+
+    # Print the data in a table format
+    print(tabulate(data, headers=headers, tablefmt="pretty"))
 
 def main(config, show_feed):
     # Load configuration parameters
@@ -212,6 +227,11 @@ if __name__ == "__main__":
         default="config.json",
         help="Path to the configuration file (default: config.json)"
     )
+    parser.add_argument(
+        '--stat',
+        action='store_true',
+        help="Print the detection statistics from the CSV file"
+    )
 
     # Parse arguments
     args = parser.parse_args()
@@ -219,9 +239,13 @@ if __name__ == "__main__":
     # Load configuration from the JSON file
     config = load_config(args.config)
 
-    # Override show_feed from the config file if --show is provided
-    if args.show:
-        config["show_feed"] = True
+    # Handle --stat argument
+    if args.stat:
+        today = datetime.now().strftime("%Y-%m-%d")
+        output_folder = os.path.join(config["output_folder"], today)
+        csv_file = os.path.join(output_folder, "detection_durations.csv")
+        print_statistics(csv_file)
+        exit()
 
     # Call the main function with the configuration and show_feed argument
-    main(config, show_feed=config["show_feed"])
+    main(config, show_feed=args.show)

@@ -6,6 +6,5 @@
     "input_size": [200, 200],
     "output_folder": "output",
     "confidence_threshold": 0.5,
-    "person_class_id": 15,
-    "show_feed": false
+    "person_class_id": 15
 }
