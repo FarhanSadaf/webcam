@@ -5,15 +5,30 @@ from datetime import datetime
 import time
 import csv
 import argparse
+import json
 
-def main(show_feed):
+def load_config(config_file):
+    """Load configuration from a JSON file."""
+    with open(config_file, "r") as f:
+        config = json.load(f)
+    return config
+
+def main(config, show_feed):
+    # Load configuration parameters
+    model_weights = config["model_weights"]
+    model_config = config["model_config"]
+    coco_names = config["coco_names"]
+    frame_rate = config["frame_rate"]
+    input_size = tuple(config["input_size"])
+    output_folder = config["output_folder"]
+    confidence_threshold = config["confidence_threshold"]
+    person_class_id = config["person_class_id"]
+
     # Load MobileNet-SSD model (Caffe format)
-    model_weights = "mobilenet_iter_73000.caffemodel"
-    model_config = "deploy.prototxt"
     net = cv2.dnn.readNetFromCaffe(model_config, model_weights)
 
     # Load COCO class names
-    with open("coco.names", "r") as f:
+    with open(coco_names, "r") as f:
         classes = f.read().strip().split("\n")
 
     # Initialize video capture
@@ -23,16 +38,12 @@ def main(show_feed):
         print("Error: Could not open video feed.")
         exit()
 
-    # Set desired frame rate (e.g., 10 FPS)
-    frame_rate = 5
+    # Set desired frame rate
     frame_delay = 1 / frame_rate  # Delay between frames in seconds
-
-    # Set reduced input size (e.g., 200x200)
-    input_size = (200, 200)
 
     # Create a folder for the day
     today = datetime.now().strftime("%Y-%m-%d")
-    output_folder = os.path.join("output", today)
+    output_folder = os.path.join(output_folder, today)
     os.makedirs(output_folder, exist_ok=True)
 
     # CSV file to store duration data
@@ -87,8 +98,8 @@ def main(show_feed):
         for i in range(detections.shape[2]):
             confidence = detections[0, 0, i, 2]
 
-            # Filter for "person" class (class_id = 15 in MobileNet-SSD)
-            if confidence > 0.5 and int(detections[0, 0, i, 1]) == 15:
+            # Filter for "person" class
+            if confidence > confidence_threshold and int(detections[0, 0, i, 1]) == person_class_id:
                 # Set the flag to True if a person is detected
                 person_detected = True
 
@@ -184,10 +195,33 @@ def main(show_feed):
     cv2.destroyAllWindows()
 
 if __name__ == "__main__":
-    # Parse command-line arguments
-    parser = argparse.ArgumentParser(description="Human Detection Script")
-    parser.add_argument('--feed', action='store_true', help="Show the video feed")
+    # Set up argument parser with a description
+    parser = argparse.ArgumentParser(
+        description="Human Detection Script: Detects humans in a video feed and saves screenshots.",
+        epilog="Example usage: python main.py --show --config config.json"
+    )
+
+    # Add arguments
+    parser.add_argument(
+        '--show',
+        action='store_true',
+        help="Show the video feed during detection (default: False)"
+    )
+    parser.add_argument(
+        '--config',
+        default="config.json",
+        help="Path to the configuration file (default: config.json)"
+    )
+
+    # Parse arguments
     args = parser.parse_args()
 
-    # Call the main function with the show_feed argument
-    main(show_feed=args.feed)
+    # Load configuration from the JSON file
+    config = load_config(args.config)
+
+    # Override show_feed from the config file if --show is provided
+    if args.show:
+        config["show_feed"] = True
+
+    # Call the main function with the configuration and show_feed argument
+    main(config, show_feed=config["show_feed"])

@@ -1,0 +1,11 @@
+{
+    "model_weights": "mobilenet_iter_73000.caffemodel",
+    "model_config": "deploy.prototxt",
+    "coco_names": "coco.names",
+    "frame_rate": 5,
+    "input_size": [200, 200],
+    "output_folder": "output",
+    "confidence_threshold": 0.5,
+    "person_class_id": 15,
+    "show_feed": false
+}
