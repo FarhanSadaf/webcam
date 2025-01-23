@@ -130,7 +130,6 @@ def main(config, show_feed):
         
         # If a person was detected in the previous frame but not in the current frame
         if not person_detected and person_detected_prev:
-            print(f"Person detected: {person_detected}, person detected prev: {person_detected_prev}")
             # Calculate the duration of the detection
             if detection_start_time is not None:
                 detection_duration = time.time() - detection_start_time
