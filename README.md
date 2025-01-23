@@ -127,6 +127,7 @@ Modify `config.json` to customize the behavior:
 - `camera_id`: Change video capture camera.
 - `second_screenshot_interval`: Time (sec.) after second screenshot will be taken or video recording will be started.
 - `recording_duration`: Minimum amount of time (sec.) the video will be recorded.
+- `coverage_threshold`: Average brightness threshold for dark frames. Adjust it according to your environment.
 
 ---
 

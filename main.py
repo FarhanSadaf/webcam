@@ -70,7 +70,7 @@ def main(config, show_feed, no_video):
     recording_duration = config["recording_duration"]
 
     # Constants for camera coverage detection
-    COVERAGE_THRESHOLD = 10  # Adjust based on your environment
+    COVERAGE_THRESHOLD = config["coverage_threshold"]  
     CONSECUTIVE_FRAMES_THRESHOLD = 30  # Number of consecutive dark frames to trigger an alert
     coverage_frame_buffer = deque(maxlen=CONSECUTIVE_FRAMES_THRESHOLD)
 
@@ -147,11 +147,8 @@ def main(config, show_feed, no_video):
 
         # Check if the camera is covered (too many consecutive dark frames)
         if sum(coverage_frame_buffer) == CONSECUTIVE_FRAMES_THRESHOLD:
-            timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            print(f'Your camera is covered at {timestamp}.')
-            # coverage_filename = os.path.join(daily_output_folder, f"{timestamp}_camera_covered.jpg")
-            # cv2.imwrite(coverage_filename, frame)
-            # print(f"Saved coverage alert frame: {coverage_filename}")
+            timestamp = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
+            print(f'Your camera may be covered at {timestamp}.')
             coverage_frame_buffer.clear()  # Reset the buffer after triggering the alert
 
         # Get frame dimensions

@@ -9,5 +9,6 @@
     "person_class_id": 15,
     "camera_id": 0,
     "second_screenshot_interval": 4,
-    "recording_duration": 10  
+    "recording_duration": 10,
+    "coverage_threshold": 5
 }
