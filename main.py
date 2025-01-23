@@ -57,18 +57,6 @@ def main(config, show_feed):
     # Set desired frame rate
     frame_delay = 1 / frame_rate  # Delay between frames in seconds
 
-    # Create a folder for the day
-    today = datetime.now().strftime("%Y-%m-%d")
-    output_folder = os.path.join(output_folder, today)
-    os.makedirs(output_folder, exist_ok=True)
-
-    # CSV file to store duration data
-    csv_file = os.path.join(output_folder, "detection_durations.csv")
-    if not os.path.exists(csv_file):
-        with open(csv_file, mode="w", newline="") as file:
-            writer = csv.writer(file)
-            writer.writerow(["Filename", "Duration (seconds)"])
-
     # Variable to track if a person was detected in the previous frame
     person_detected_prev = False
 
@@ -86,6 +74,20 @@ def main(config, show_feed):
     current_filename = None
 
     while True:
+        # Get the current date
+        today = datetime.now().strftime("%Y-%m-%d")
+
+        # Create a folder for the day if it doesn't exist
+        daily_output_folder = os.path.join(output_folder, today)
+        os.makedirs(daily_output_folder, exist_ok=True)
+
+        # CSV file to store duration data
+        csv_file = os.path.join(daily_output_folder, "detection_durations.csv")
+        if not os.path.exists(csv_file):
+            with open(csv_file, mode="w", newline="") as file:
+                writer = csv.writer(file)
+                writer.writerow(["Filename", "Duration (seconds)"])
+
         # Start timer for frame rate control
         start_time = time.time()
 
@@ -166,7 +168,7 @@ def main(config, show_feed):
 
             # Generate a filename with the current timestamp and screenshot count
             timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            current_filename = os.path.join(output_folder, f"{timestamp}_#{screenshot_count}.jpg")
+            current_filename = os.path.join(daily_output_folder, f"{timestamp}_#{screenshot_count}.jpg")
 
             # Save the frame without bounding boxes
             cv2.imwrite(current_filename, frame_to_save)
@@ -184,7 +186,7 @@ def main(config, show_feed):
 
                 # Generate a filename with the current timestamp and screenshot count
                 timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-                current_filename = os.path.join(output_folder, f"{timestamp}_#{screenshot_count}.jpg")
+                current_filename = os.path.join(daily_output_folder, f"{timestamp}_#{screenshot_count}.jpg")
 
                 # Save the frame without bounding boxes
                 cv2.imwrite(current_filename, frame_to_save)
@@ -212,7 +214,7 @@ def main(config, show_feed):
 if __name__ == "__main__":
     # Set up argument parser with a description
     parser = argparse.ArgumentParser(
-        description="Human Detection Script: Detects humans in a video feed and saves screenshots.",
+        description="Webcam Surveillance: Detects humans in a video feed and saves screenshots.",
         epilog="Example usage: python main.py --show --config config.json"
     )
 
