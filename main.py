@@ -14,31 +14,44 @@ def load_config(config_file):
         config = json.load(f)
     return config
 
-def print_statistics(output_folder, days=1):
+def print_statistics(output_folder, days=1, top=None):
     """
     Print the CSV file in an organized table for the last 'days' days.
+    Starts a new table for each day and shows the header only in the first table.
+    Sorts and limits the number of rows displayed for each day if 'top' is specified.
     """
     # Calculate the date range
     today = datetime.now()
     date_range = [(today - timedelta(days=i)).strftime("%Y-%m-%d") for i in range(days)]
 
     # Collect data from all relevant CSV files
-    all_data = []
+    headers = None
     for date in date_range:
         csv_file = os.path.join(output_folder, date, "detection_durations.csv")
         if os.path.exists(csv_file):
             with open(csv_file, mode="r") as file:
                 reader = csv.reader(file)
-                headers = next(reader)  # Read the header row
-                data = list(reader)     # Read the rest of the data
-                all_data.extend(data)
+                if headers is None:
+                    headers = next(reader)  # Read the header row (only once)
+                else:
+                    next(reader)  # Skip the header row for subsequent days
+                data = list(reader)  # Read the rest of the data
+
+                # Sort and limit the data only if 'top' is specified
+                if top is not None:
+                    # Sort data by duration (assuming duration is the second column)
+                    data.sort(key=lambda x: float(x[1]), reverse=True)
+                    # Limit the number of rows
+                    data = data[:top]
+
+                # Print the data in a table format
+                print(f"Data for {date}:")
+                print(tabulate(data, headers=headers if headers else [], tablefmt="pretty"))
+                print()  # Add a blank line between tables
         else:
             print(f"No data available for {date}.")
 
-    # Print the data in a table format
-    if all_data:
-        print(tabulate(all_data, headers=headers, tablefmt="pretty"))
-    else:
+    if headers is None:
         print("No statistics available for the specified days.")
 
 def main(config, show_feed):
@@ -249,6 +262,11 @@ if __name__ == "__main__":
         type=int,
         help="Print the detection statistics from the CSV file for the last N days (default: 1)"
     )
+    parser.add_argument(
+        '-top',
+        type=int,
+        help="Limit the number of rows displayed for each day's statistics"
+    )
 
     # Parse arguments
     args = parser.parse_args()
@@ -258,7 +276,7 @@ if __name__ == "__main__":
 
     # Handle --stat argument
     if args.stat is not None:
-        print_statistics(config["output_folder"], days=args.stat)
+        print_statistics(config["output_folder"], days=args.stat, top=args.top)
         exit()
 
     # Call the main function with the configuration and show_feed argument

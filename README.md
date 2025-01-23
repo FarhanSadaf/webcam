@@ -63,6 +63,10 @@ chmod +x webcam
   ```bash
   ./webcam --stat 2
   ```
+- **Print top M results for the last N days (e.g., top 2 results for the last 3 days):**
+  ```bash
+  ./webcam --stat 2 -top 2
+  ```
 
 #### Add to PATH (Optional):
 To use `webcam` as a global command:
@@ -92,6 +96,11 @@ Run the Python Script Directly:
 - **Print detection statistics for the last N days (e.g., last 2 days):**
   ```bash
   python main.py --stat 2
+  ```
+
+- **Print top M results for the last N days (e.g., top 2 results for the last 3 days):**
+  ```bash
+  python main.py --stat 2 -top 2
   ```
 
 ---
