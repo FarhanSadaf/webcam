@@ -114,7 +114,8 @@ Modify `config.json` to customize the behavior:
 - `frame_rate`: Desired frame rate.
 - `input_size`: Input size for the model.
 - `output_folder`: Folder to save screenshots and logs.
-- `camera_id`: Change video capture camera
+- `camera_id`: Change video capture camera.
+- `second_screenshot_interval`: Time (sec.) after second screenshot will be taken.
 
 ---
 

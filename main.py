@@ -65,6 +65,7 @@ def main(config, show_feed):
     confidence_threshold = config["confidence_threshold"]
     person_class_id = config["person_class_id"]
     camera_id = config["camera_id"]
+    second_screenshot_interval = config["second_screenshot_interval"]
 
     # Load MobileNet-SSD model (Caffe format)
     net = cv2.dnn.readNetFromCaffe(model_config, model_weights)
@@ -94,7 +95,7 @@ def main(config, show_feed):
     detection_duration = 0
 
     # Variable to track if a 5-second screenshot has been taken
-    five_second_screenshot_taken = False
+    second_screenshot_taken = False
 
     # Variable to store the filename for the current detection
     current_filename = None
@@ -190,7 +191,7 @@ def main(config, show_feed):
 
             # Record the start time of the detection
             detection_start_time = time.time()
-            five_second_screenshot_taken = False  # Reset the 5-second screenshot flag
+            second_screenshot_taken = False  # Reset the 5-second screenshot flag
 
             # Generate a filename with the current timestamp and screenshot count
             timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -206,7 +207,7 @@ def main(config, show_feed):
             current_duration = time.time() - detection_start_time
 
             # Take another screenshot if the person stays for more than 5 seconds
-            if current_duration > 5 and not five_second_screenshot_taken:
+            if current_duration > second_screenshot_interval and not second_screenshot_taken:
                 # Increment the screenshot counter
                 screenshot_count += 1
 
@@ -219,7 +220,7 @@ def main(config, show_feed):
                 print(f"Saved: {current_filename} (Total screenshots: {screenshot_count})")
 
                 # Mark that the 5-second screenshot has been taken
-                five_second_screenshot_taken = True
+                second_screenshot_taken = True
 
         # Update the previous detection state
         person_detected_prev = person_detected

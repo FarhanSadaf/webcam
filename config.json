@@ -7,5 +7,6 @@
     "output_folder": "output",
     "confidence_threshold": 0.5,
     "person_class_id": 15,
-    "camera_id": 0
+    "camera_id": 0,
+    "second_screenshot_interval": 5
 }
