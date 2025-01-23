@@ -247,7 +247,7 @@ def main(config, show_feed, no_video):
 
         # Write the frame to the video file if recording is active
         if video_writer is not None:
-            video_writer.write(frame)
+            video_writer.write(frame_to_save)
 
         # Update the previous detection state
         person_detected_prev = person_detected
