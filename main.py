@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 import time
 import csv
 import argparse
@@ -14,19 +14,32 @@ def load_config(config_file):
         config = json.load(f)
     return config
 
-def print_statistics(csv_file):
-    """Print the CSV file in an organized table."""
-    if not os.path.exists(csv_file):
-        print("No statistics available. CSV file does not exist.")
-        return
+def print_statistics(output_folder, days=1):
+    """
+    Print the CSV file in an organized table for the last 'days' days.
+    """
+    # Calculate the date range
+    today = datetime.now()
+    date_range = [(today - timedelta(days=i)).strftime("%Y-%m-%d") for i in range(days)]
 
-    with open(csv_file, mode="r") as file:
-        reader = csv.reader(file)
-        headers = next(reader)  # Read the header row
-        data = list(reader)     # Read the rest of the data
+    # Collect data from all relevant CSV files
+    all_data = []
+    for date in date_range:
+        csv_file = os.path.join(output_folder, date, "detection_durations.csv")
+        if os.path.exists(csv_file):
+            with open(csv_file, mode="r") as file:
+                reader = csv.reader(file)
+                headers = next(reader)  # Read the header row
+                data = list(reader)     # Read the rest of the data
+                all_data.extend(data)
+        else:
+            print(f"No data available for {date}.")
 
     # Print the data in a table format
-    print(tabulate(data, headers=headers, tablefmt="pretty"))
+    if all_data:
+        print(tabulate(all_data, headers=headers, tablefmt="pretty"))
+    else:
+        print("No statistics available for the specified days.")
 
 def main(config, show_feed):
     # Load configuration parameters
@@ -231,8 +244,10 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         '--stat',
-        action='store_true',
-        help="Print the detection statistics from the CSV file"
+        nargs='?',  # Makes --stat optional and allows an optional argument
+        const=1,    # Default value if --stat is used without an argument
+        type=int,
+        help="Print the detection statistics from the CSV file for the last N days (default: 1)"
     )
 
     # Parse arguments
@@ -242,11 +257,8 @@ if __name__ == "__main__":
     config = load_config(args.config)
 
     # Handle --stat argument
-    if args.stat:
-        today = datetime.now().strftime("%Y-%m-%d")
-        output_folder = os.path.join(config["output_folder"], today)
-        csv_file = os.path.join(output_folder, "detection_durations.csv")
-        print_statistics(csv_file)
+    if args.stat is not None:
+        print_statistics(config["output_folder"], days=args.stat)
         exit()
 
     # Call the main function with the configuration and show_feed argument
