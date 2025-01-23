@@ -18,7 +18,7 @@ This project detects humans in a live webcam feed using a MobileNet-SSD model. I
 ### 1. Clone the Repository
 ```bash
 git clone https://github.com/FarhanSadaf/webcam.git
-cd your-repo
+cd webcam
 ```
 
 ### 2. Set Up a Virtual Environment
@@ -59,6 +59,10 @@ chmod +x webcam
   ```bash
   ./webcam --stat
   ```
+- **Print detection statistics for the last N days (e.g., last 2 days):**
+  ```bash
+  ./webcam --stat 2
+  ```
 
 #### Add to PATH (Optional):
 To use `webcam` as a global command:
@@ -83,6 +87,11 @@ Run the Python Script Directly:
 - **Print detection statistics:**
   ```bash
   python main.py --stat
+  ```
+
+- **Print detection statistics for the last N days (e.g., last 2 days):**
+  ```bash
+  python main.py --stat 2
   ```
 
 ---
