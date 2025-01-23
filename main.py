@@ -208,7 +208,7 @@ def main(config, show_feed, no_video):
 
         # Display the frame with bounding boxes and duration text if show_feed is True
         if show_feed:
-            cv2.imshow("Human Detection", frame)
+            cv2.imshow("Webcam Surveillance", frame)
 
         # Save the frame as soon as a person is detected (without bounding boxes)
         if person_detected and not person_detected_prev:
