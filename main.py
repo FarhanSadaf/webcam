@@ -54,7 +54,7 @@ def print_statistics(output_folder, days=1, top=None):
     if headers is None:
         print("No statistics available for the specified days.")
 
-def main(config, show_feed):
+def main(config, show_feed, no_video):
     # Load configuration parameters
     model_weights = config["model_weights"]
     model_config = config["model_config"]
@@ -66,6 +66,7 @@ def main(config, show_feed):
     person_class_id = config["person_class_id"]
     camera_id = config["camera_id"]
     second_screenshot_interval = config["second_screenshot_interval"]
+    recording_duration = config["recording_duration"]
 
     # Load MobileNet-SSD model (Caffe format)
     net = cv2.dnn.readNetFromCaffe(model_config, model_weights)
@@ -94,11 +95,15 @@ def main(config, show_feed):
     detection_start_time = None
     detection_duration = 0
 
-    # Variable to track if a 5-second screenshot has been taken
+    # Variable to track if a second screenshot has been taken
     second_screenshot_taken = False
 
     # Variable to store the filename for the current detection
     current_filename = None
+
+    # Video recording variables
+    video_writer = None
+    recording_start_time = None
 
     while True:
         # Get the current date
@@ -191,7 +196,7 @@ def main(config, show_feed):
 
             # Record the start time of the detection
             detection_start_time = time.time()
-            second_screenshot_taken = False  # Reset the 5-second screenshot flag
+            second_screenshot_taken = False  # Reset the second screenshot flag
 
             # Generate a filename with the current timestamp and screenshot count
             timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -206,7 +211,7 @@ def main(config, show_feed):
             # Calculate the current duration
             current_duration = time.time() - detection_start_time
 
-            # Take another screenshot if the person stays for more than 5 seconds
+            # Take another screenshot if the person stays for more than the specified interval
             if current_duration > second_screenshot_interval and not second_screenshot_taken:
                 # Increment the screenshot counter
                 screenshot_count += 1
@@ -219,8 +224,30 @@ def main(config, show_feed):
                 cv2.imwrite(current_filename, frame_to_save)
                 print(f"Saved: {current_filename} (Total screenshots: {screenshot_count})")
 
-                # Mark that the 5-second screenshot has been taken
+                # Mark that the second screenshot has been taken
                 second_screenshot_taken = True
+
+                # Start video recording (if not disabled)
+                if not no_video and video_writer is None:
+                    video_filename = os.path.join(daily_output_folder, f"{timestamp}_recording.avi")
+                    fourcc = cv2.VideoWriter_fourcc(*'XVID')
+                    video_writer = cv2.VideoWriter(video_filename, fourcc, frame_rate, (w, h))
+                    recording_start_time = time.time()
+                    print(f"Started video recording: {video_filename}")
+
+        # Stop video recording if both conditions are met:
+        # 1. The recording duration has elapsed.
+        # 2. The person has left the frame.
+        if video_writer is not None:
+            elapsed_recording_time = time.time() - recording_start_time
+            if elapsed_recording_time >= recording_duration and not person_detected:
+                video_writer.release()
+                video_writer = None
+                print("Stopped video recording (duration elapsed and person left).")
+
+        # Write the frame to the video file if recording is active
+        if video_writer is not None:
+            video_writer.write(frame)
 
         # Update the previous detection state
         person_detected_prev = person_detected
@@ -235,6 +262,8 @@ def main(config, show_feed):
             break
 
     # Release the video capture object and close all OpenCV windows
+    if video_writer is not None:
+        video_writer.release()
     video_capture.release()
     cv2.destroyAllWindows()
 
@@ -268,6 +297,11 @@ if __name__ == "__main__":
         type=int,
         help="Limit the number of rows displayed for each day's statistics"
     )
+    parser.add_argument(
+        '--novideo',
+        action='store_true',
+        help="Disable video recording (default: False)"
+    )
 
     # Parse arguments
     args = parser.parse_args()
@@ -281,4 +315,4 @@ if __name__ == "__main__":
         exit()
 
     # Call the main function with the configuration and show_feed argument
-    main(config, show_feed=args.show)
+    main(config, show_feed=args.show, no_video=args.novideo)

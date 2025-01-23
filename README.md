@@ -50,6 +50,11 @@ chmod +x webcam
   ./webcam
   ```
 
+- **Video Recording Disabled:**
+  ```bash
+  ./webcam --novideo
+  ```
+
 - **With the video feed:**
   ```bash
   ./webcam --show
@@ -81,6 +86,11 @@ Run the Python Script Directly:
 - **Without showing the video feed:**
   ```bash
   python main.py
+  ```
+
+  - **Video Recording Disabled:**
+  ```bash
+  python main.py --novideo
   ```
 
 - **With the video feed:**
@@ -115,7 +125,8 @@ Modify `config.json` to customize the behavior:
 - `input_size`: Input size for the model.
 - `output_folder`: Folder to save screenshots and logs.
 - `camera_id`: Change video capture camera.
-- `second_screenshot_interval`: Time (sec.) after second screenshot will be taken.
+- `second_screenshot_interval`: Time (sec.) after second screenshot will be taken or video recording will be started.
+- `recording_duration`: Minimum amount of time (sec.) the video will be recorded.
 
 ---
 

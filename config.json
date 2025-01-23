@@ -8,5 +8,6 @@
     "confidence_threshold": 0.5,
     "person_class_id": 15,
     "camera_id": 0,
-    "second_screenshot_interval": 5
+    "second_screenshot_interval": 3,
+    "recording_duration": 10  
 }
