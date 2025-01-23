@@ -9,6 +9,7 @@ This project detects humans in a live webcam feed using a MobileNet-SSD model. I
 - **Real-time human detection** using a pre-trained MobileNet-SSD model.
 - **Saves screenshots** when a person is detected.
 - **Logs detection durations** in a CSV file.
+- **Starts recording** if the intruder stays for too long.
 - **Customizable configuration** via `config.json`.
 
 ---
