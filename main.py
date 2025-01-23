@@ -6,7 +6,8 @@ import time
 import csv
 import argparse
 import json
-from tabulate import tabulate  # For pretty-printing the CSV file
+from tabulate import tabulate  
+from collections import deque  
 
 def load_config(config_file):
     """Load configuration from a JSON file."""
@@ -67,6 +68,11 @@ def main(config, show_feed, no_video):
     camera_id = config["camera_id"]
     second_screenshot_interval = config["second_screenshot_interval"]
     recording_duration = config["recording_duration"]
+
+    # Constants for camera coverage detection
+    COVERAGE_THRESHOLD = 10  # Adjust based on your environment
+    CONSECUTIVE_FRAMES_THRESHOLD = 30  # Number of consecutive dark frames to trigger an alert
+    coverage_frame_buffer = deque(maxlen=CONSECUTIVE_FRAMES_THRESHOLD)
 
     # Load MobileNet-SSD model (Caffe format)
     net = cv2.dnn.readNetFromCaffe(model_config, model_weights)
@@ -130,6 +136,24 @@ def main(config, show_feed, no_video):
             print("Error: Could not read frame.")
             break
 
+        # Check for camera coverage
+        gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        average_brightness = np.mean(gray_frame)
+
+        if average_brightness < COVERAGE_THRESHOLD:
+            coverage_frame_buffer.append(1)  # Add 1 to the buffer if the frame is dark
+        else:
+            coverage_frame_buffer.append(0)  # Add 0 if the frame is not dark
+
+        # Check if the camera is covered (too many consecutive dark frames)
+        if sum(coverage_frame_buffer) == CONSECUTIVE_FRAMES_THRESHOLD:
+            timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            print(f'Your camera is covered at {timestamp}.')
+            # coverage_filename = os.path.join(daily_output_folder, f"{timestamp}_camera_covered.jpg")
+            # cv2.imwrite(coverage_filename, frame)
+            # print(f"Saved coverage alert frame: {coverage_filename}")
+            coverage_frame_buffer.clear()  # Reset the buffer after triggering the alert
+
         # Get frame dimensions
         (h, w) = frame.shape[:2]
 
@@ -161,7 +185,7 @@ def main(config, show_feed, no_video):
                 label = f"Person: {confidence * 100:.2f}%"
                 cv2.rectangle(frame, (startX, startY), (endX, endY), (0, 255, 0), 2)
                 cv2.putText(frame, label, (startX, startY - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-        
+
         # If a person was detected in the previous frame but not in the current frame
         if not person_detected and person_detected_prev:
             # Calculate the duration of the detection
