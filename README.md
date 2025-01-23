@@ -1,6 +1,6 @@
 # Webcam Surveillance
 
-This project detects humans in a live webcam feed using a MobileNet-SSD model. It saves screenshots when a person is detected and logs the duration of their presence. The script can be run as a command-line tool on Linux or as a Python script on other platforms.
+This project detects humans in a live webcam feed using a MobileNet-SSD model. It saves screenshots when a person is detected and logs the duration of their presence, also starts video recording if the person stays for too long. The script can be run as a command-line tool on Linux or as a Python script on other platforms.
 
 ---
 
