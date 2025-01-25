@@ -131,7 +131,6 @@ def main(config, show_feed, no_video):
     # Load configuration parameters
     model_weights = config["model_weights"]
     model_config = config["model_config"]
-    coco_names = config["coco_names"]
     frame_rate = config["frame_rate"]
     input_size = tuple(config["input_size"])
     output_folder = config["output_folder"]
@@ -148,10 +147,6 @@ def main(config, show_feed, no_video):
 
     # Load MobileNet-SSD model (Caffe format)
     net = cv2.dnn.readNetFromCaffe(model_config, model_weights)
-
-    # Load COCO class names
-    with open(coco_names, "r") as f:
-        classes = f.read().strip().split("\n")
 
     # Initialize video capture
     video_capture = cv2.VideoCapture(camera_id)
