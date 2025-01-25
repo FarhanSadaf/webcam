@@ -71,7 +71,7 @@ chmod +x webcam
   ```
 - **Print top M results for the last N days (e.g., top 2 results for the last 3 days):**
   ```bash
-  ./webcam --stat 2 -top 2
+  ./webcam --stat 3 -top 2
   ```
 
 - **Delete output directories for specific days:**
@@ -117,7 +117,7 @@ Run the Python Script Directly:
 
 - **Print top M results for the last N days (e.g., top 2 results for the last 3 days):**
   ```bash
-  python main.py --stat 2 -top 2
+  python main.py --stat 3 -top 2
   ```
 
 - **Delete output directories for specific days:**
