@@ -10,5 +10,5 @@
     "camera_id": 0,
     "second_screenshot_interval": 4,
     "recording_duration": 10,
-    "coverage_threshold": 5
+    "coverage_threshold": 1
 }

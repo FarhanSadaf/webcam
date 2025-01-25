@@ -55,6 +55,78 @@ def print_statistics(output_folder, days=1, top=None):
     if headers is None:
         print("No statistics available for the specified days.")
 
+def delete_directories(output_folder):
+    """
+    List all date directories in the output folder and allow the user to delete specific directories.
+    """
+    # Get all date directories in the output folder
+    date_dirs = [d for d in os.listdir(output_folder) if os.path.isdir(os.path.join(output_folder, d))]
+    
+    if not date_dirs:
+        print("No date directories found in the output folder.")
+        return
+
+    # Print the list of date directories with indices
+    print("Date directories:")
+    for idx, dir_name in enumerate(date_dirs, start=1):
+        print(f"{idx}. {dir_name}")
+
+    # Prompt the user for input
+    user_input = input(
+        "Enter the number of the directory to delete (e.g., 1), or a range (e.g., 2-5), or 'q' to quit: "
+    ).strip()
+
+    if user_input.lower() == 'q':
+        print("Exiting delete mode.")
+        return
+
+    try:
+        # Handle single directory deletion
+        if '-' not in user_input:
+            idx = int(user_input)
+            if 1 <= idx <= len(date_dirs):
+                dir_to_delete = os.path.join(output_folder, date_dirs[idx - 1])
+                confirm = input(f"Are you sure you want to delete '{dir_to_delete}'? (y/n): ").strip().lower()
+                if confirm == 'y':
+                    # Delete the directory and its contents
+                    for root, dirs, files in os.walk(dir_to_delete, topdown=False):
+                        for name in files:
+                            os.remove(os.path.join(root, name))
+                        for name in dirs:
+                            os.rmdir(os.path.join(root, name))
+                    os.rmdir(dir_to_delete)
+                    print(f"Deleted directory: {dir_to_delete}")
+                else:
+                    print("Deletion canceled.")
+            else:
+                print("Invalid input. Please enter a valid number.")
+
+        # Handle range of directories deletion
+        else:
+            start_idx, end_idx = map(int, user_input.split('-'))
+            if 1 <= start_idx <= end_idx <= len(date_dirs):
+                confirm = input(
+                    f"Are you sure you want to delete directories {start_idx}-{end_idx}? (y/n): "
+                ).strip().lower()
+                if confirm == 'y':
+                    for idx in range(start_idx, end_idx + 1):
+                        dir_to_delete = os.path.join(output_folder, date_dirs[idx - 1])
+                        # Delete the directory and its contents
+                        for root, dirs, files in os.walk(dir_to_delete, topdown=False):
+                            for name in files:
+                                os.remove(os.path.join(root, name))
+                            for name in dirs:
+                                os.rmdir(os.path.join(root, name))
+                        os.rmdir(dir_to_delete)
+                        print(f"Deleted directory: {dir_to_delete}")
+                else:
+                    print("Deletion canceled.")
+            else:
+                print("Invalid range. Please enter a valid range.")
+
+    except ValueError:
+        print("Invalid input. Please enter a number or a range (e.g., 2-5).")
+
 def main(config, show_feed, no_video):
     # Load configuration parameters
     model_weights = config["model_weights"]
@@ -323,12 +395,22 @@ if __name__ == "__main__":
         action='store_true',
         help="Disable video recording (default: False)"
     )
+    parser.add_argument(
+        '--delete',
+        action='store_true',
+        help="Enter delete mode to remove specific date directories"
+    )
 
     # Parse arguments
     args = parser.parse_args()
 
     # Load configuration from the JSON file
     config = load_config(args.config)
+
+    # Handle --delete argument
+    if args.delete:
+        delete_directories(config["output_folder"])
+        exit()
 
     # Handle --stat argument
     if args.stat is not None:

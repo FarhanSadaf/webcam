@@ -73,6 +73,12 @@ chmod +x webcam
   ./webcam --stat 2 -top 2
   ```
 
+- **Delete output directories for specific days:**
+  ```bash
+  ./webcam --delete
+  ```
+
+
 #### Add to PATH (Optional):
 To use `webcam` as a global command:
 ```bash
@@ -113,6 +119,10 @@ Run the Python Script Directly:
   python main.py --stat 2 -top 2
   ```
 
+- **Delete output directories for specific days:**
+  ```bash
+  python main.py --delete
+  ```
 ---
 
 ## Configuration
