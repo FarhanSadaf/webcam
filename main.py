@@ -150,10 +150,14 @@ def main(config, show_feed, no_video):
 
     # Initialize video capture
     video_capture = cv2.VideoCapture(camera_id)
-
+    
     if not video_capture.isOpened():
-        print("Error: Could not open video feed.")
-        exit()
+        print("Error: Could not open video feed. Attempting to reconnect...")
+        time.sleep(5)  # Wait for 5 seconds before retrying
+        video_capture = cv2.VideoCapture(camera_id)
+        if not video_capture.isOpened():
+            print("Failed to reconnect. Exiting.")
+            exit()
 
     # Set desired frame rate
     frame_delay = 1 / frame_rate  # Delay between frames in seconds
@@ -200,8 +204,14 @@ def main(config, show_feed, no_video):
         ret, frame = video_capture.read()
 
         if not ret:
-            print("Error: Could not read frame.")
-            break
+            print("Error: Could not read frame. Attempting to reconnect...")
+            video_capture.release()
+            time.sleep(5)  # Wait for 5 seconds before retrying
+            video_capture = cv2.VideoCapture(camera_id)
+            if not video_capture.isOpened():
+                print("Failed to reconnect. Exiting.")
+                break
+            continue
 
         # Check for camera coverage
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
