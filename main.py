@@ -128,191 +128,174 @@ def delete_directories(output_folder):
         print("Invalid input. Please enter a number or a range (e.g., 2-5).")
 
 def main(config, show_feed, no_video):
-    # Load configuration parameters
-    model_weights = config["model_weights"]
-    model_config = config["model_config"]
-    frame_rate = config["frame_rate"]
-    input_size = tuple(config["input_size"])
-    output_folder = config["output_folder"]
-    confidence_threshold = config["confidence_threshold"]
-    person_class_id = config["person_class_id"]
-    camera_id = config["camera_id"]
-    second_screenshot_interval = config["second_screenshot_interval"]
-    recording_duration = config["recording_duration"]
+    try:
+        # Load configuration parameters
+        model_weights = config["model_weights"]
+        model_config = config["model_config"]
+        frame_rate = config["frame_rate"]
+        input_size = tuple(config["input_size"])
+        output_folder = config["output_folder"]
+        confidence_threshold = config["confidence_threshold"]
+        person_class_id = config["person_class_id"]
+        camera_id = config["camera_id"]
+        second_screenshot_interval = config["second_screenshot_interval"]
+        recording_duration = config["recording_duration"]
 
-    # Constants for camera coverage detection
-    COVERAGE_THRESHOLD = config["coverage_threshold"]  
-    CONSECUTIVE_FRAMES_THRESHOLD = 30  # Number of consecutive dark frames to trigger an alert
-    coverage_frame_buffer = deque(maxlen=CONSECUTIVE_FRAMES_THRESHOLD)
+        # Constants for camera coverage detection
+        COVERAGE_THRESHOLD = config["coverage_threshold"]  
+        CONSECUTIVE_FRAMES_THRESHOLD = 30  # Number of consecutive dark frames to trigger an alert
+        coverage_frame_buffer = deque(maxlen=CONSECUTIVE_FRAMES_THRESHOLD)
 
-    # Load MobileNet-SSD model (Caffe format)
-    net = cv2.dnn.readNetFromCaffe(model_config, model_weights)
+        # Load MobileNet-SSD model (Caffe format)
+        net = cv2.dnn.readNetFromCaffe(model_config, model_weights)
 
-    # Initialize video capture
-    video_capture = cv2.VideoCapture(camera_id)
-    
-    if not video_capture.isOpened():
-        print("Error: Could not open video feed. Attempting to reconnect...")
-        time.sleep(5)  # Wait for 5 seconds before retrying
+        # Initialize video capture
         video_capture = cv2.VideoCapture(camera_id)
+        
         if not video_capture.isOpened():
-            print("Failed to reconnect. Exiting.")
-            exit()
-
-    # Set desired frame rate
-    frame_delay = 1 / frame_rate  # Delay between frames in seconds
-
-    # Variable to track if a person was detected in the previous frame
-    person_detected_prev = False
-
-    # Counter for the number of screenshots taken
-    screenshot_count = 0
-
-    # Variables to track detection duration
-    detection_start_time = None
-    detection_duration = 0
-
-    # Variable to track if a second screenshot has been taken
-    second_screenshot_taken = False
-
-    # Variable to store the filename for the current detection
-    current_filename = None
-
-    # Video recording variables
-    video_writer = None
-    recording_start_time = None
-
-    while True:
-        # Get the current date
-        today = datetime.now().strftime("%Y-%m-%d")
-
-        # Create a folder for the day if it doesn't exist
-        daily_output_folder = os.path.join(output_folder, today)
-        os.makedirs(daily_output_folder, exist_ok=True)
-
-        # CSV file to store duration data
-        csv_file = os.path.join(daily_output_folder, "detection_durations.csv")
-        if not os.path.exists(csv_file):
-            with open(csv_file, mode="w", newline="") as file:
-                writer = csv.writer(file)
-                writer.writerow(["Filename", "Duration (seconds)"])
-
-        # Start timer for frame rate control
-        start_time = time.time()
-
-        # Capture frame-by-frame
-        ret, frame = video_capture.read()
-
-        if not ret:
-            print("Error: Could not read frame. Attempting to reconnect...")
-            video_capture.release()
+            print("Error: Could not open video feed. Attempting to reconnect...")
             time.sleep(5)  # Wait for 5 seconds before retrying
             video_capture = cv2.VideoCapture(camera_id)
             if not video_capture.isOpened():
                 print("Failed to reconnect. Exiting.")
-                break
-            continue
+                exit()
 
-        # Check for camera coverage
-        gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        average_brightness = np.mean(gray_frame)
+        # Set desired frame rate
+        frame_delay = 1 / frame_rate  # Delay between frames in seconds
 
-        if average_brightness < COVERAGE_THRESHOLD:
-            coverage_frame_buffer.append(1)  # Add 1 to the buffer if the frame is dark
-        else:
-            coverage_frame_buffer.append(0)  # Add 0 if the frame is not dark
+        # Variable to track if a person was detected in the previous frame
+        person_detected_prev = False
 
-        # Check if the camera is covered (too many consecutive dark frames)
-        if sum(coverage_frame_buffer) == CONSECUTIVE_FRAMES_THRESHOLD:
-            timestamp = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
-            print(f'Your camera may be covered at {timestamp}.')
-            coverage_frame_buffer.clear()  # Reset the buffer after triggering the alert
+        # Counter for the number of screenshots taken
+        screenshot_count = 0
 
-        # Get frame dimensions
-        (h, w) = frame.shape[:2]
+        # Variables to track detection duration
+        detection_start_time = None
+        detection_duration = 0
 
-        # Prepare the input blob for the model with reduced input size
-        blob = cv2.dnn.blobFromImage(frame, 0.007843, input_size, 127.5)
-        net.setInput(blob)
-        detections = net.forward()
+        # Variable to track if a second screenshot has been taken
+        second_screenshot_taken = False
 
-        # Flag to check if a person is detected in the current frame
-        person_detected = False
+        # Variable to store the filename for the current detection
+        current_filename = None
 
-        # Create a copy of the frame for saving (without bounding boxes)
-        frame_to_save = frame.copy()
+        # Video recording variables
+        video_writer = None
+        recording_start_time = None
 
-        # Process detections
-        for i in range(detections.shape[2]):
-            confidence = detections[0, 0, i, 2]
+        while True:
+            # Get the current date
+            today = datetime.now().strftime("%Y-%m-%d")
 
-            # Filter for "person" class
-            if confidence > confidence_threshold and int(detections[0, 0, i, 1]) == person_class_id:
-                # Set the flag to True if a person is detected
-                person_detected = True
+            # Create a folder for the day if it doesn't exist
+            daily_output_folder = os.path.join(output_folder, today)
+            os.makedirs(daily_output_folder, exist_ok=True)
 
-                # Get bounding box coordinates
-                box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
-                (startX, startY, endX, endY) = box.astype("int")
-
-                # Draw bounding box and label on the display frame (not the saved frame)
-                label = f"Person: {confidence * 100:.2f}%"
-                cv2.rectangle(frame, (startX, startY), (endX, endY), (0, 255, 0), 2)
-                cv2.putText(frame, label, (startX, startY - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-
-        # If a person was detected in the previous frame but not in the current frame
-        if not person_detected and person_detected_prev:
-            # Calculate the duration of the detection
-            if detection_start_time is not None:
-                detection_duration = time.time() - detection_start_time
-
-                # Save the duration to the CSV file
-                with open(csv_file, mode="a", newline="") as file:
+            # CSV file to store duration data
+            csv_file = os.path.join(daily_output_folder, "detection_durations.csv")
+            if not os.path.exists(csv_file):
+                with open(csv_file, mode="w", newline="") as file:
                     writer = csv.writer(file)
-                    writer.writerow([current_filename, round(detection_duration, 2)])
+                    writer.writerow(["Filename", "Duration (seconds)"])
 
-                print(f"Person left the frame. Duration: {round(detection_duration, 2)} seconds")
+            # Start timer for frame rate control
+            start_time = time.time()
 
-        # If a person is detected, calculate the duration and display it in the live feed
-        if person_detected:
-            if detection_start_time is None:
-                detection_start_time = time.time()  # Initialize start time if not already set
-            current_duration = time.time() - detection_start_time
-            duration_text = f"Duration: {round(current_duration, 2)}s"
-            cv2.putText(frame, duration_text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)  # Smaller font size
-        else:
-            detection_start_time = None  # Reset start time if no person is detected
+            # Capture frame-by-frame
+            ret, frame = video_capture.read()
 
-        # Display the frame with bounding boxes and duration text if show_feed is True
-        if show_feed:
-            cv2.imshow("Webcam Surveillance", frame)
+            if not ret:
+                print("Error: Could not read frame. Attempting to reconnect...")
+                video_capture.release()
+                time.sleep(5)  # Wait for 5 seconds before retrying
+                video_capture = cv2.VideoCapture(camera_id)
+                if not video_capture.isOpened():
+                    print("Failed to reconnect.")
+                    raise RuntimeError("Failed to read frame.")
+                continue
 
-        # Save the frame as soon as a person is detected (without bounding boxes)
-        if person_detected and not person_detected_prev:
-            # Increment the screenshot counter
-            screenshot_count += 1
+            # Check for camera coverage
+            gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            average_brightness = np.mean(gray_frame)
 
-            # Record the start time of the detection
-            detection_start_time = time.time()
-            second_screenshot_taken = False  # Reset the second screenshot flag
+            if average_brightness < COVERAGE_THRESHOLD:
+                coverage_frame_buffer.append(1)  # Add 1 to the buffer if the frame is dark
+            else:
+                coverage_frame_buffer.append(0)  # Add 0 if the frame is not dark
 
-            # Generate a filename with the current timestamp and screenshot count
-            timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            current_filename = os.path.join(daily_output_folder, f"{timestamp}_#{screenshot_count}.jpg")
+            # Check if the camera is covered (too many consecutive dark frames)
+            if sum(coverage_frame_buffer) == CONSECUTIVE_FRAMES_THRESHOLD:
+                timestamp = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
+                print(f'Your camera may be covered at {timestamp}.')
+                coverage_frame_buffer.clear()  # Reset the buffer after triggering the alert
 
-            # Save the frame without bounding boxes
-            cv2.imwrite(current_filename, frame_to_save)
-            print(f"Saved: {current_filename} (Total screenshots: {screenshot_count})")
+            # Get frame dimensions
+            (h, w) = frame.shape[:2]
 
-        # If a person is still in the frame
-        if person_detected:
-            # Calculate the current duration
-            current_duration = time.time() - detection_start_time
+            # Prepare the input blob for the model with reduced input size
+            blob = cv2.dnn.blobFromImage(frame, 0.007843, input_size, 127.5)
+            net.setInput(blob)
+            detections = net.forward()
 
-            # Take another screenshot if the person stays for more than the specified interval
-            if current_duration > second_screenshot_interval and not second_screenshot_taken:
+            # Flag to check if a person is detected in the current frame
+            person_detected = False
+
+            # Create a copy of the frame for saving (without bounding boxes)
+            frame_to_save = frame.copy()
+
+            # Process detections
+            for i in range(detections.shape[2]):
+                confidence = detections[0, 0, i, 2]
+
+                # Filter for "person" class
+                if confidence > confidence_threshold and int(detections[0, 0, i, 1]) == person_class_id:
+                    # Set the flag to True if a person is detected
+                    person_detected = True
+
+                    # Get bounding box coordinates
+                    box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
+                    (startX, startY, endX, endY) = box.astype("int")
+
+                    # Draw bounding box and label on the display frame (not the saved frame)
+                    label = f"Person: {confidence * 100:.2f}%"
+                    cv2.rectangle(frame, (startX, startY), (endX, endY), (0, 255, 0), 2)
+                    cv2.putText(frame, label, (startX, startY - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+
+            # If a person was detected in the previous frame but not in the current frame
+            if not person_detected and person_detected_prev:
+                # Calculate the duration of the detection
+                if detection_start_time is not None:
+                    detection_duration = time.time() - detection_start_time
+
+                    # Save the duration to the CSV file
+                    with open(csv_file, mode="a", newline="") as file:
+                        writer = csv.writer(file)
+                        writer.writerow([current_filename, round(detection_duration, 2)])
+
+                    print(f"Person left the frame. Duration: {round(detection_duration, 2)} seconds")
+
+            # If a person is detected, calculate the duration and display it in the live feed
+            if person_detected:
+                if detection_start_time is None:
+                    detection_start_time = time.time()  # Initialize start time if not already set
+                current_duration = time.time() - detection_start_time
+                duration_text = f"Duration: {round(current_duration, 2)}s"
+                cv2.putText(frame, duration_text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)  # Smaller font size
+            else:
+                detection_start_time = None  # Reset start time if no person is detected
+
+            # Display the frame with bounding boxes and duration text if show_feed is True
+            if show_feed:
+                cv2.imshow("Webcam Surveillance", frame)
+
+            # Save the frame as soon as a person is detected (without bounding boxes)
+            if person_detected and not person_detected_prev:
                 # Increment the screenshot counter
                 screenshot_count += 1
+
+                # Record the start time of the detection
+                detection_start_time = time.time()
+                second_screenshot_taken = False  # Reset the second screenshot flag
 
                 # Generate a filename with the current timestamp and screenshot count
                 timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -322,48 +305,83 @@ def main(config, show_feed, no_video):
                 cv2.imwrite(current_filename, frame_to_save)
                 print(f"Saved: {current_filename} (Total screenshots: {screenshot_count})")
 
-                # Mark that the second screenshot has been taken
-                second_screenshot_taken = True
+            # If a person is still in the frame
+            if person_detected:
+                # Calculate the current duration
+                current_duration = time.time() - detection_start_time
 
-                # Start video recording (if not disabled)
-                if not no_video and video_writer is None:
-                    video_filename = os.path.join(daily_output_folder, f"{timestamp}_recording.avi")
-                    fourcc = cv2.VideoWriter_fourcc(*'XVID')
-                    video_writer = cv2.VideoWriter(video_filename, fourcc, frame_rate, (w, h))
-                    recording_start_time = time.time()
-                    print(f"Started video recording: {video_filename}")
+                # Take another screenshot if the person stays for more than the specified interval
+                if current_duration > second_screenshot_interval and not second_screenshot_taken:
+                    # Increment the screenshot counter
+                    screenshot_count += 1
 
-        # Stop video recording if both conditions are met:
-        # 1. The recording duration has elapsed.
-        # 2. The person has left the frame.
+                    # Generate a filename with the current timestamp and screenshot count
+                    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                    current_filename = os.path.join(daily_output_folder, f"{timestamp}_#{screenshot_count}.jpg")
+
+                    # Save the frame without bounding boxes
+                    cv2.imwrite(current_filename, frame_to_save)
+                    print(f"Saved: {current_filename} (Total screenshots: {screenshot_count})")
+
+                    # Mark that the second screenshot has been taken
+                    second_screenshot_taken = True
+
+                    # Start video recording (if not disabled)
+                    if not no_video and video_writer is None:
+                        video_filename = os.path.join(daily_output_folder, f"{timestamp}_recording.avi")
+                        fourcc = cv2.VideoWriter_fourcc(*'XVID')
+                        video_writer = cv2.VideoWriter(video_filename, fourcc, frame_rate, (w, h))
+                        recording_start_time = time.time()
+                        print(f"Started video recording: {video_filename}")
+
+            # Stop video recording if both conditions are met:
+            # 1. The recording duration has elapsed.
+            # 2. The person has left the frame.
+            if video_writer is not None:
+                elapsed_recording_time = time.time() - recording_start_time
+                if elapsed_recording_time >= recording_duration and not person_detected:
+                    video_writer.release()
+                    video_writer = None
+                    print("Stopped video recording (duration elapsed and person left).")
+
+            # Write the frame to the video file if recording is active
+            if video_writer is not None:
+                video_writer.write(frame_to_save)
+
+            # Update the previous detection state
+            person_detected_prev = person_detected
+
+            # Calculate elapsed time and enforce frame rate
+            elapsed_time = time.time() - start_time
+            if elapsed_time < frame_delay:
+                time.sleep(frame_delay - elapsed_time)
+
+            # Break the loop if 'q' is pressed and show_feed is True
+            if show_feed and cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+    
+    except Exception as e:
+        print(f"An error occurred: {str(e)}. Restarting the application...")
         if video_writer is not None:
-            elapsed_recording_time = time.time() - recording_start_time
-            if elapsed_recording_time >= recording_duration and not person_detected:
-                video_writer.release()
-                video_writer = None
-                print("Stopped video recording (duration elapsed and person left).")
-
-        # Write the frame to the video file if recording is active
+            video_writer.release()
+        video_capture.release()
+        cv2.destroyAllWindows()
+        time.sleep(5)  # Wait for 5 seconds before restarting
+        main(config, show_feed, no_video)
+    
+    except KeyboardInterrupt:
+        print("Exiting...")
         if video_writer is not None:
-            video_writer.write(frame_to_save)
-
-        # Update the previous detection state
-        person_detected_prev = person_detected
-
-        # Calculate elapsed time and enforce frame rate
-        elapsed_time = time.time() - start_time
-        if elapsed_time < frame_delay:
-            time.sleep(frame_delay - elapsed_time)
-
-        # Break the loop if 'q' is pressed and show_feed is True
-        if show_feed and cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-
-    # Release the video capture object and close all OpenCV windows
-    if video_writer is not None:
-        video_writer.release()
-    video_capture.release()
-    cv2.destroyAllWindows()
+            video_writer.release()
+        video_capture.release()
+        cv2.destroyAllWindows()
+        
+    finally:
+        # Release the video capture object and close all OpenCV windows
+        if video_writer is not None:
+            video_writer.release()
+        video_capture.release()
+        cv2.destroyAllWindows()
 
 if __name__ == "__main__":
     # Set up argument parser with a description
